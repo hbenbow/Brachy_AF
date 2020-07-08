@@ -1,0 +1,119 @@
+---
+title: "*Brachypodium distachyon* infected with various isolates of *Zymoseptoria tritici*"
+author: "Harriet R. Benbow"
+date: "02/07/2020"
+output: bookdown::word_document2
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(WGCNA)
+library(tidyr)
+library(igraph)
+rm(.Random.seed)
+set.seed(1)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+The purpose of this analysis is to yield more information from the RNAseq samples of *B. distachyon* ecotype Bd21 inoculated with different isoluate os *Zymoseptora tritici*. 
+
+The RNAseq samples are paired end RNAseq samples. The samples were aligned to a reference sequence, and transcript abundance was estimated using Kallisto. As both host and pathogen transcripts are of interest, the reference was a combined reference of the gene annotations of *B. distachyon* and *Z. tritici*. In total, 36 transcript abundance files were created, one for every set of paired end reads (Table \@ref(tab:samples)).
+
+
+```{r samples, echo=F}
+colData<-read.csv("~/Documents/colleen_brachy/Data/colData.csv")
+
+kable(colData, caption="Samples", row.names=NA, "pandoc", align="c")
+
+```
+
+# Results 
+## RNAseq pre-processing
+
+The first step of the RNAseq analysis is to assess the quality of the data. Firstly, we look at correlation between the reps. All three reps were strongly correlation with eachother, indicating good agreement of gene expression between the three reps (Figure \@ref(fig:corr)).
+
+```{r corr, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A correlation heatmap of the three reps. The number represents the correlation coefficient for each pair of reps."}
+library(corrplot)
+library(Hmisc)
+rep_wise<-read.csv("~/Documents/colleen_brachy/Data/repwise.csv")
+colnames(rep_wise)<-c("Factor", "GeneID", "Rep1", "Rep2", "Rep3", "Sum", "test1", "test2", "test3")
+cor<-as.matrix(rep_wise[,c(3,4,5)])
+cor<-rcorr(cor)
+corrplot(cor$r, type="lower", order="original",p.mat = cor$P, 
+         sig.level = 0.05, insig = "blank", tl.col="black", tl.cex = 1, 
+         tl.srt = 0, tl.offset = 1, method="color", addCoef.col = "white")
+
+```
+
+
+### Principle component analysis to identify sources of variance  
+Here, we use principle component analysis as a method if dimension reduction, to identify key drivers of variation in your data. We do this on the plant and fungal data separately, as otherwise the signal of the fungal data is lost due to the dominance of the plant reads. 
+
+#### *B. distachyon* reads  
+When we insepct the *B. distachyon* reads, we can see that the clustering shows clusters with an obvious reason. We see a slight rep effect (to be expected), but no other patterns in the data that explain the clustering (Figure \@ref(fig:brachypca)). This suggests natural biological variation is the main driver. N.B. don't be suprised that there are not any obvious clusters based on fungal isolate used. The effect of the isolate would not be sufficient enough to cause enough variation in the brachy reads that could be picked up by principle componends 1 and 2. 
+
+```{r brachypca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A principle component analysis of *B. distachyon* reads. Colours represent reps."}
+library(ggplot2)
+library(tidyverse)
+library(gridExtra)
+library(grid)
+library(png)
+library(grDevices)
+brachy_pcaData<-read.csv("~/Documents/colleen_brachy/Data/brachy_PCA.csv")
+brachy_pcaData$Rep<-as.factor(brachy_pcaData$Rep)
+ggplot(brachy_pcaData, aes(x=PC1, y=PC2)) + geom_point(aes(color=Rep), size=4, alpha=0.8) +
+  theme_classic() +
+  # scale_color_manual(values=c("slategray3", "dodgerblue", "rosybrown3", "orangered"), 
+  #                    labels=c("Longbow + Tween20", expression(paste("Longbow + ",italic("Z. tritici"))), "Stigg + Tween20", expression(paste("Stigg + ",italic("Z. tritici")))))+
+  theme(text = element_text(size=10, colour="black"),
+        axis.text.x = element_text(colour="black"),
+        legend.position = "bottom") +
+  xlab("Principle component 1")+
+  ylab("Principle component 2")
+
+
+```
+
+#### *Z. tritici* reads  
+When we explore the *Z. tritici* reads only, we see a clear clustering based on timepoint, with T0 reads clustered together, separated from the other timepoints. This is to be expected (and is something I have seen before in my data - the early timepoint on its own). You can also see some level of clustering between the other timepoints, but these groups are not very clearly defined (Figure \@ref(fig:zymopca)). The shapes of the points represent the isolates, and as you can see, there is not much variance that we can attribute to isolate.  
+
+
+```{r zymopca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A principle component analysis of *Z. tritici* reads. Colours represent Timepoint and shape represents fungal isolate used."}
+library(ggplot2)
+
+zymo_pcaData<-read.csv("~/Documents/colleen_brachy/Data/zymo_PCA.csv")
+zymo_pcaData$Rep<-as.factor(zymo_pcaData$Rep)
+zymo_pcaData$Timepoint<-as.factor(zymo_pcaData$Timepoint)
+
+ggplot(zymo_pcaData, aes(x=PC1, y=PC2)) + geom_point(aes(color=Timepoint, shape=Zymo_isolate), size=4, alpha=0.8) +
+  theme_classic() +
+  # scale_color_manual(values=c("slategray3", "dodgerblue", "rosybrown3", "orangered"), 
+  #                    labels=c("Longbow + Tween20", expression(paste("Longbow + ",italic("Z. tritici"))), "Stigg + Tween20", expression(paste("Stigg + ",italic("Z. tritici")))))+
+  theme(text = element_text(size=10, colour="black"),
+        axis.text.x = element_text(colour="black"),
+        legend.position = "bottom") +
+  xlab("Principle component 1")+
+  ylab("Principle component 2")
+
+
+```
+
+
+### Read count statistics
+As part of the pre-processing of RNAseq data, it is good to asses and quantify the number of genes expressed in each sample. This is of particular importance when looking at dual RNAseq of a host + pathogen system.  To do this, we filter out genes based on their expression level, and the consistency of their expression across the reps. Here, I have filtered genes that are expressed at 0.5 transcripts per million (TPM) or more, in 2 out of the three reps. For example, for 'Gene A' to be considered 'expressed' in Sample 1, timepoint 1, it would have to be expressed (TPM >=0.5) in 2 out of the three reps for that sample.
+Based on these criteria, we found a total of 55,420 genes to be expressed in this data, with an average of 46,781 genes expressed per sample (Table \@ref(tab:tab2)).   
+Please note that these are fairly stringent filtering parameters, and may not be necessary, especially if you wish to detect pathogen genes that may be present at very low levels.  
+
+```{r tab2, echo=F}
+rep_wise<-read.csv("~/Documents/colleen_brachy/Data/repwise.csv")
+colnames(rep_wise)<-c("Factor", "GeneID", "Rep1", "Rep2", "Rep3", "Sum", "test1", "test2", "test3")
+rep_wise$sum2<-rep_wise$test1 + rep_wise$test2 + rep_wise$test3
+expressed<-rep_wise[(rep_wise$sum2 >=2),] 
+kable(table(expressed$Factor), caption="Number of expressed genes per sample (averaged across reps)","pandoc", align="c", col.names=c("Sample", "Number of expressed genes"))
+
+```
+
+
+We can break these down into host and pathogen genes and see how many genes from each species are expressed in each sample. 
