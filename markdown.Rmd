@@ -134,3 +134,7 @@ ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
   ylab("Number of expressed genes")
 
 ```
+
+### Differential expression analysis
+
+In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. 
