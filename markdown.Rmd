@@ -2,7 +2,7 @@
 title: "*Brachypodium distachyon* infected with various isolates of *Zymoseptoria tritici*"
 author: "Harriet R. Benbow"
 date: "02/07/2020"
-output: bookdown::word_document2
+output: bookdown::pdf_document2
 ---
 
 ```{r setup, include=FALSE}
@@ -116,4 +116,21 @@ kable(table(expressed$Factor), caption="Number of expressed genes per sample (av
 ```
 
 
-We can break these down into host and pathogen genes and see how many genes from each species are expressed in each sample. 
+We can break these down into host and pathogen genes and see how many genes from each species are expressed in each sample. As we can see from figure \@ref(fig:fig4), the number of *B. distachyon* genes is fairly stable cross the timepoints, and we see a slight increase in *Z. tritici* reads from 0 DPI to 4 DPI, and the number of genes expressed is then stable across timepoints. This is really interesting and informative, it could mean that the fungus is growing between days 0 and 4, but because it is the *number* of genes expressed, rather than the *abundance* of genes expressed, it more likely indicates that the fungus is active and doing stuff at 4 DPI that its not doing at 0 DPI. This is logical really as at 0 DPI its just been chilling on a petri dish!
+
+
+```{r fig4, echo=F, results=F, warning=F, comment=F, message=F, fig.cap="The number of expressed genes from both species across the 4 timepoints."}
+tab2<-read.csv("~/Documents/colleen_brachy/Data/expressed_genes_table.csv")
+library(ggplot2)
+ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
+  geom_col(aes(fill=Isolate), position="dodge") +
+  facet_wrap(Species~., ncol=1) +
+  theme_bw() +
+  scale_fill_manual(values=c("grey75", "grey50", "grey30"), 
+                   labels=c("553.11", "560.11", "IPO323"))+
+  theme(text = element_text(size=15, colour="black"),
+        axis.text.x = element_text(colour="black")) +
+  xlab("Timepoint (DPI)")+
+  ylab("Number of expressed genes")
+
+```

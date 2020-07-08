@@ -55,18 +55,28 @@ rep_wise$Sum<-rep_wise$`1` + rep_wise$`2` + rep_wise$`3`
 rep_wise$test1<-ifelse(rep_wise$`1`>0.5, 1,0)
 rep_wise$test2<-ifelse(rep_wise$`2`>0.5, 1,0)
 rep_wise$test3<-ifelse(rep_wise$`3`>0.5, 1,0)
-write.csv(rep_wise, file='~/Documents/colleen_brachy/Data/repwise.csv', row.names=F)
-
-rep_wise$sum2<-rep_wise$test1 + rep_wise$test2 + rep_wise$test3
-expressed<-rep_wise[(rep_wise$sum2 >=2),] 
 
 expressed_brachy<-subset(expressed, expressed$GeneID %in% Brachy_genes$Transcript)
 expressed_brachy$Species<-'B. distachyon'
 expressed_Zymo<-subset(expressed, expressed$GeneID %in% Zymo_genes$Transcript)
 expressed_Zymo$Species<-("Z. tritici")
- kable(table(expressed$Factor), 
-      caption="Number of expressed genes per sample (averaged across reps)",
-      "pandoc", align="c", col.names=c("Sample", "Number of expressed genes"))
+expressed<-rbind(expressed_brachy, expressed_Zymo)
+tab<-as.data.frame(table(expressed$Zymo_isolate, expressed$Timepoint, expressed$Species))
+colnames(tab)<-c("Isolate", "Timepoint", "Bd", "Zt")
+tab2<-gather(tab[,c(3,4)], key='Species', value="n.genes")
+tab2$Isolate<-tab$Isolate
+tab2$Timepoint<-tab$Timepoint
+write.csv(tab2, file="~/Documents/colleen_brachy/Data/expressed_genes_table.csv")
+ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
+  geom_col(aes(fill=Isolate), position="dodge") +
+  facet_wrap(Species~., ncol=1) +
+  theme_bw() +
+  scale_fill_manual(values=c("grey75", "grey50", "grey30"), 
+                   labels=c("553.11", "560.11", "IPO323"))+
+  theme(text = element_text(size=20, colour="black"),
+        axis.text.x = element_text(colour="black")) +
+  xlab("Timepoint (DPI)")+
+  ylab("Number of expressed genes")
 
 # check correlation of reps
 cor<-as.matrix(rep_wise[,c(3,4,5)])
