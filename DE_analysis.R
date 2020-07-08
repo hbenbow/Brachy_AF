@@ -78,21 +78,23 @@ RES9$Isolate<-"IPO323"
 
 all_by_timepoint<-rbind(RES1, RES2, RES3, RES4, RES5, RES6, RES7, RES8, RES9)
 all_timepoint_sig<-all_by_timepoint[(all_by_timepoint$padj < 0.05),]
+all_timepoint_sig<-na.omit(all_timepoint_sig)
+rm(RES1, RES2, RES3, RES4, RES5, RES6, RES7, RES8, RES9)
 
 
 # now lets compare isolates between timepoints.
 RES1<-as.data.frame(results(dds, contrast=c("Factor", "553.11_0", "IPO323_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES1$Timepoint<-0
-RES1$Comparison<-"554.11 v IPO323"
+RES1$Comparison<-"553.11 v IPO323"
 RES2<-as.data.frame(results(dds, contrast=c("Factor", "553.11_4", "IPO323_4"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES2$Timepoint<-4
-RES2$Comparison<-"554.11 v IPO323"
+RES2$Comparison<-"553.11 v IPO323"
 RES3<-as.data.frame(results(dds, contrast=c("Factor", "553.11_9", "IPO323_9"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES3$Timepoint<-9
-RES3$Comparison<-"554.11 v IPO323"
+RES3$Comparison<-"553.11 v IPO323"
 RES4<-as.data.frame(results(dds, contrast=c("Factor", "553.11_21", "IPO323_21"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES4$Timepoint<-21
-RES4$Comparison<-"554.11 v IPO323"
+RES4$Comparison<-"553.11 v IPO323"
 RES5<-as.data.frame(results(dds, contrast=c("Factor", "560.11_0", "IPO323_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES5$Timepoint<-0
 RES5$Comparison<-"560.11 v IPO323"
@@ -119,3 +121,20 @@ RES12$Timepoint<-21
 RES12$Comparison<-"560.11 v 553.11"
 
 all_genotype<-rbind(RES1, RES2, RES3, RES4, RES5, RES6, RES7, RES8, RES9, RES10, RES11, RES12)
+all_genotype_sig<-all_genotype[(all_genotype$padj < 0.05),]
+all_genotype_sig<-na.omit(all_genotype_sig)
+
+rm(RES1, RES2, RES3, RES4, RES5, RES6, RES7, RES8, RES9, RES10, RES11, RES12)
+
+Zymo_genes <- read.delim("~/Documents/colleen_brachy/Data/Zymo_genes.txt")
+Brachy_genes <- read.delim("~/Documents/colleen_brachy/Data/Brachy_genes.txt")
+Zymo_genes$Species<-'Zt'
+Brachy_genes$Species<-"Bd"
+genes<-rbind(Zymo_genes, Brachy_genes)
+write.csv(genes, file="~/Documents/colleen_brachy/Data/all_genes.csv")
+all_genotype_sig<-merge(all_genotype_sig, genes, by.x="row", by.y="Transcript")
+all_timepoint_sig<-merge(all_timepoint_sig, genes, by.x="row", by.y="Transcript")
+write.csv(all_genotype_sig, file="~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
+write.csv(all_timepoint_sig, file="~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
+
+

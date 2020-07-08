@@ -137,4 +137,14 @@ ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
 
 ### Differential expression analysis
 
-In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. 
+In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. Basically at this point I went rogue and did all comparisons; for each isolate, I compared every timepoint to 0 DPI, and for every timepoint, I compared every pair of isolates. This yielded to sets of differentially expressed genes.
+
+```{r tab3, echo=F}
+library(knitr)
+all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
+all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
+
+kable(table(all_genotype_sig$Species, all_genotype_sig$Timepoint, all_genotype_sig$Comparison), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Comparison", "Number of DEGs"))
+
+kable(table(all_timepoint_sig$Species, all_timepoint_sig$Timepoint, all_timepoint_sig$Isolate), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Isolate", "Number of DEGs"))
+```
