@@ -1,5 +1,23 @@
-setwd("~/Documents/colleen_brachy/Data/SSPs/")
+library(WGCNA)
+library(tximport)
+library(DESeq2)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(plyr)
+library(stringr)
+library(gplots)
+library(tidyr)
+library(Hmisc)
+library(corrplot)
+library(pheatmap)
+library(RColorBrewer)
+library(pivottabler)
+library(VennDiagram)
 
+setwd("~/Documents/colleen_brachy/Data/SSPs/")
+all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
+all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
 
 files <- dir(pattern =".fa.fai")
 species<-substr(files, 1, nchar(files)-7)
@@ -24,7 +42,7 @@ for(file in species){
   write.csv(ssps, file=paste(file, "ssps.csv", sep=""))
 }
 Together<-as.data.frame(do.call("rbind", list))
-all_SSPs<-as.data.frame(do.call("rbind", all))
+all_putative_SSPs<-as.data.frame(do.call("rbind", all))
 write.csv(Together, file="table_ssps.csv")
 write.csv(all_SSPs, file="all_chromosomes_ssps.csv")
 
@@ -38,3 +56,13 @@ brachy_ssps<-brachy_ssps[(brachy_ssps$GPI_anchor=="No"),]
 
 zymo_ssps<-zymo[(zymo$PredHel == 0),]
 zymo_ssps<-zymo_ssps[(zymo_ssps$GPI_anchor=="No"),]
+
+all_ssps<-rbind(brachy_ssps, zymo_ssps)
+all_ssps$Protein<-gsub("Mycgr3P", "Mycgr3T", all_ssps$Protein)
+
+ssps_deg_isolate<-subset(all_genotype_sig, all_genotype_sig$row %in% all_ssps$Protein)
+ssps_deg_time<-subset(all_timepoint_sig, all_timepoint_sig$row %in% all_ssps$Protein)
+write.csv(ssps_deg_isolate, file="~/Documents/colleen_brachy/Data/SSPs/DESSPs_isolate.csv")
+write.csv(ssps_deg_time, file="~/Documents/colleen_brachy/Data/SSPs/DESSPs_time.csv")
+
+

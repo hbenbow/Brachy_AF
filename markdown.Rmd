@@ -16,7 +16,7 @@ library(tidyr)
 library(igraph)
 library(cowplot)
 library(ggpubr)
-knitr::opts_chunk$set(echo = TRUE, fig.pos = "!H")
+knitr::opts_chunk$set(echo = TRUE, fig.pos = "ht")
 ```
 
 
@@ -59,7 +59,7 @@ Here, we use principle component analysis as a method if dimension reduction, to
 
 
 #### *B. distachyon* reads  
-When we insepct the *B. distachyon* reads, we can see that the clustering shows clusters with an obvious reason. We see a slight rep effect (to be expected), but no other patterns in the data that explain the clustering (Figure \@ref(fig:brachypca)). This suggests natural biological variation is the main driver. N.B. don't be suprised that there are not any obvious clusters based on fungal isolate used. The effect of the isolate would not be sufficient enough to cause enough variation in the brachy reads that could be picked up by principle componends 1 and 2. 
+When we insepct the *B. distachyon* reads, we can see that the clustering shows clusters with an obvious reason. We see a slight rep effect (to be expected), but no other patterns in the data that explain the clustering (Figure \@ref(fig:brachypca)). This suggests natural biological variation is the main driver. N.B. don't be suprised that there are not any obvious clusters based on fungal isolate used. The effect of the isolate would not be sufficient enough to cause enough variation in the brachy reads that could be picked up by principle components 1 and 2. 
 
 ```{r brachypca, echo=FALSE, results=F, warning=F, comment=F, message=F,fig.cap="A principle component analysis of B. distachyon reads. Colours represent reps."}
 library(ggplot2)
@@ -149,18 +149,9 @@ ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
   
 
 ## Differential expression analysis
-In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. Basically at this point I went rogue and did all comparisons; for each isolate, I compared every timepoint to 0 DPI, and for every timepoint, I compared every pair of isolates. This yielded to sets of differentially expressed genes.
+In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. Basically at this point I went rogue and did all comparisons; for each isolate, I compared every timepoint to 0 DPI (table \@ref(tab:tab3)), and for every timepoint, I compared every pair of isolates (table \@ref(tab:tab4)). This yielded to sets of differentially expressed genes.
 
 ```{r tab3, echo=F}
-library(knitr)
-all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
-all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
-
-kable(table(all_genotype_sig$Species, all_genotype_sig$Timepoint, all_genotype_sig$Comparison), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Comparison", "Number of DEGs"))
-```
-
-
-```{r tab4, echo=F}
 library(knitr)
 all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
 all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
@@ -169,14 +160,25 @@ kable(table(all_timepoint_sig$Species, all_timepoint_sig$Timepoint, all_timepoin
 ```
 
 
+```{r tab4, echo=F}
+library(knitr)
+all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
+all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
+
+kable(table(all_genotype_sig$Species, all_genotype_sig$Timepoint, all_genotype_sig$Comparison), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Comparison", "Number of DEGs"))
+```
+
+
 ### Isolate specific DEGs (per timepoint)
 
-We can start to subset the differentially expressed genes based on interesting biological questions. Firsly, we can look at genes that are differentially expressed at a partcular timepoint (compared to 0 DPI) in 1, 2 or 3 of the isolates. Given the observed 'aggresiveness' of 553.11, it might be interesting to look at genes that are differentially expressed in this isolate, and not the others. Similarly, it might be interesting to see genes that are differentially expressed between the isolates, at each timepoint.  
-First, we look at genes that are differentially expressed by timepoint (Figure \@ref(fig:fig5)).
+We can start to subset the differentially expressed genes based on interesting biological questions. Firsly, we can look at genes that are differentially expressed at a partcular timepoint (compared to 0 DPI) in 1, 2 or 3 of the isolates. Given the observed 'aggresiveness' of 553.11, it might be interesting to look at genes that are differentially expressed in this isolate, and not the others. Similarly, it might be interesting to see genes that are differentially expressed between the isolates, at each timepoint. First, we look at genes that are differentially expressed by timepoint (Figure \@ref(fig:fig5)).
 
 ```{r fig5, out.width=".8\\linewidth", include=TRUE, fig.align="center", fig.cap=c("Venn diagrams of differentially expressed genes between timepoints, using timpoint '0 DPI' as the control A) Isolate 553.11, B) Isolate 560.11, C) Isolate IPO323."), echo=FALSE}
 knitr::include_graphics("venn_diagram_isolates.pdf")
 ```
+
+As you can see, there are alot of DEGs, many of which are shared. In this case, I would be inclined to ignore the *B. distachyon* genes because they are probably differentially expressed due to natural processes in the plant. While this also applies to the fungus, because you have 3 isolates, you can compare and see which *Z. tritici* genes are, for example, DE at 4 days in 553.11, and not in the other 2. These data might help identify interesting genes when combined with the differentially expression analysis done between the isolates. 
+
 
 ### DEGs between the isolates
 Secondly, we can see genes that are differentially expressed by isolate, across the timepoints (Figure \@ref(fig:fig6)). 
@@ -191,7 +193,6 @@ As we can see from Figure \@ref(fig:fig6), tghere are no genes that are differen
 For all of the DEGs, and their subsets thereof, I have put csv tables in the directory for you. Each of these tables has the gene name as rows, and the condition (so either timepoint, or comparison) as rows, and each gene has a 1 if it is differentially expressed and a 0 if it is not. I find the easiest way to find genes in subsets I am interested in is to just sort by those columns, and extract genes that have a 1 in those columns, and a 0 in the others. You can then extract their differential expression data from the files 'all_genetype_sig.csv' and 'all_timepoint_sig.csv'.
 
 ### Species breakdown of differentially expressed genes
-
 
 
 ```{r fig7, echo=F ,results=F, warning=F, comment=F, message=F, fig.cap="The number of differentially expressed genes by species A) Differentially expressed genes between each timepoint and 0 DPI, separated by isolate, B) Differentially expressed genes betweeen isolates."}
@@ -228,8 +229,38 @@ ggarrange(a, b,
 ```
 
 
-As we are looking at dual RNAseq, it is important to dileneate the DEGs by species. As we can see in Figure  \@ref(fig:fig7), there is a high proprtion of the DEGs in the 553.11-treated saples that are *Z. tritici* genes. This seems specific to the 553.11-treated samples. Another interesting/nice observatioun is that the number of DEGs increases over time across the comparisons between isolates. Of course these are just preliminary observation- there is alot of fishing that can be done within these data to find the patterns. We can also see that there are alot more DEGs in the samples where the timepoints were compared than the isolates. This will be because there are no controls so many of these DEGs will be because of differences in expression that is independant of treatment. However these genes may be interesting to look at with respect to DEGs that are also differentially expressed between the isolates (at that should be timepoint-independant).
+As we are looking at dual RNAseq, it is important to dileneate the DEGs by species. As we can see in Figure  \@ref(fig:fig7), there is a high proprtion of the DEGs in the 553.11-treated saples that are *Z. tritici* genes. This seems specific to the 553.11-treated samples. Another interesting/nice observation is that the number of DEGs increases over time across the comparisons between isolates. Of course these are just preliminary observation- there is alot of fishing that can be done within these data to find the patterns. We can also see that there are alot more DEGs in the samples where the timepoints were compared than the isolates. This will be because there are no controls so many of these DEGs will be because of differences in expression that is independant of treatment. However these genes may be interesting to look at with respect to DEGs that are also differentially expressed between the isolates (at that should be timepoint-independant).
 
 ## Mining data for small secreted proteins (SSPs)
 Now to the actual reason I started this! The goal here was to identify putative SSPs from *B. distachyon* and *Z. tritici* that are expressed/differentially expressed in the RNAseq data.
-Firstly, I use the SSP-hunting pipeline from Zhou et al., (2020) to identify SSPs in across the whole genomes of both species. 
+Firstly, I use the SSP-hunting pipeline that we published this year to identify SSPs across the whole genomes of both species. Briefly, we check for length (<=250 AA), presence of a signal peptide, presence of a transmembrane helix domain, and presence of a GPI anchor. Protiens that are <=250 AA in length with a signal peptide, no TM domain and no GPI anchor are considered putative SSPs.  
+Based on these criteria, I found *B. distachyon* to have 610 putative SSPs, and *Z. tritici* to have 234. The *B. distachyon* gene annotation contains 52,972 genes and the *Z. tritici* gene annotation contains 10,931. Therefore the percentage of each annotation that consists of SSPs is 1.15% and 2.14%, respectively. Just for comparison, we found the wheat genome to comprise 2.3% SSPs, so not too different. 
+
+Next, we find which, if any of these SSPs are differentially expressed in your RNAseq data.
+We found 27 SSPs differentially expressed between isolates (table \@ref(tab:ssps1)), and 133 SSPs differentially expressed by timepoint (table \@ref(tab:ssps2)). 
+
+
+```{r ssps1, echo=F}
+
+ssps_deg_isolate<-read.csv(file="~/Documents/colleen_brachy/Data/SSPs/DESSPs_isolate.csv")
+
+kable(spread(as.data.frame(
+  table(ssps_deg_isolate$Timepoint, ssps_deg_isolate$Species, ssps_deg_isolate$Comparison)), key="Var2", value="Freq"), caption="Number of differentally expressed SSPs (by isolate)","pandoc", align="c", col.names=c("Timepoint", "Comparison", "Bd DE SSPs", "Zt DE SSPs"))
+```
+
+
+```{r ssps2, echo=F}
+ssps_deg_time<-read.csv(file="~/Documents/colleen_brachy/Data/SSPs/DESSPs_time.csv")
+kable(spread(as.data.frame(
+  table(ssps_deg_time$Timepoint, ssps_deg_time$Isolate, ssps_deg_time$Species)), key="Var3", value="Freq"), caption="Number of differentally expressed SSPs (by timepoint)","pandoc", align="c", col.names=c("Timepoint", "Isolate", "Bd DE SSPs", "Zt DE SSPs"))
+```
+
+# The files
+
+I hope this is useful to you - it is alot of data and should give you plenty to swim through. If you have any questions about the data please email me and we can discuss!
+The files I provde you with are as follows:
+brachy_pca.csv and zymo_pca.csv - These is the Principle comonent analysis of the brachy and zymo expression data
+all_sig_by_genotype.csv and all_sig_by_timepoint.csv - These is the differentiall expression analysis results for the timepoint and isolate comparisons. If you need some more information about what the columns in these files mean just ask!
+subset_.csv - These files all contain the tables of whether or not a gene is differentially expressed. These were used to create the venn diagrams, and will make it easier for you to identify genes that are differentially expressed in a particular subset of the data. 
+DESSps_.csv - These are the differentially expressed SSPs, that came out of the SSP hunting pipeline. 
+
