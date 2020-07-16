@@ -50,13 +50,13 @@ dds <- DESeq(dds)
 # genes, as there is no way of telling if the brachy genes are DE because of treatment, or normal development
 RES1<-as.data.frame(results(dds, contrast=c("Factor", "553.11_4", "553.11_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES1$Timepoint<-4
-RES1$Isolate<-"554.11"
+RES1$Isolate<-"553.11"
 RES2<-as.data.frame(results(dds, contrast=c("Factor", "553.11_9", "553.11_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES2$Timepoint<-9
-RES2$Isolate<-"554.11"
+RES2$Isolate<-"553.11"
 RES3<-as.data.frame(results(dds, contrast=c("Factor", "553.11_21", "553.11_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES3$Timepoint<-21
-RES3$Isolate<-"554.11"
+RES3$Isolate<-"553.11"
 RES4<-as.data.frame(results(dds, contrast=c("Factor", "560.11_4", "560.11_0"), pAdjustMethod='BH', alpha=0.05, format='DataFrame', tidy=T))
 RES4$Timepoint<-4
 RES4$Isolate<-"560.11"

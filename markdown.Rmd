@@ -10,14 +10,14 @@ library(knitr)
 library(WGCNA)
 library(tidyr)
 library(igraph)
-rm(.Random.seed)
-set.seed(1)
-knitr::opts_chunk$set(echo = TRUE)
+library(cowplot)
+library(ggpubr)
+knitr::opts_chunk$set(echo = TRUE, fig.pos = "ht", out.extra = "")
 ```
 
 # Introduction
 
-The purpose of this analysis is to yield more information from the RNAseq samples of *B. distachyon* ecotype Bd21 inoculated with different isoluate os *Zymoseptora tritici*. 
+The purpose of this analysis is to yield more information from the RNAseq samples of *B. distachyon* ecotype Bd21 inoculated with different isoluate os *Zymoseptoria tritici*. 
 
 The RNAseq samples are paired end RNAseq samples. The samples were aligned to a reference sequence, and transcript abundance was estimated using Kallisto. As both host and pathogen transcripts are of interest, the reference was a combined reference of the gene annotations of *B. distachyon* and *Z. tritici*. In total, 36 transcript abundance files were created, one for every set of paired end reads (Table \@ref(tab:samples)).
 
@@ -34,7 +34,8 @@ kable(colData, caption="Samples", row.names=NA, "pandoc", align="c")
 
 The first step of the RNAseq analysis is to assess the quality of the data. Firstly, we look at correlation between the reps. All three reps were strongly correlation with eachother, indicating good agreement of gene expression between the three reps (Figure \@ref(fig:corr)).
 
-```{r corr, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A correlation heatmap of the three reps. The number represents the correlation coefficient for each pair of reps."}
+
+```{r corr, comment=F,  echo=FALSE, fig.pos = "ht",results=F, warning=F, comment=F, message=F, fig.cap="A correlation heatmap of the three reps. The number represents the correlation coefficient for each pair of reps."}
 library(corrplot)
 library(Hmisc)
 rep_wise<-read.csv("~/Documents/colleen_brachy/Data/repwise.csv")
@@ -44,17 +45,18 @@ cor<-rcorr(cor)
 corrplot(cor$r, type="lower", order="original",p.mat = cor$P, 
          sig.level = 0.05, insig = "blank", tl.col="black", tl.cex = 1, 
          tl.srt = 0, tl.offset = 1, method="color", addCoef.col = "white")
-
 ```
 
 
 ### Principle component analysis to identify sources of variance  
+
 Here, we use principle component analysis as a method if dimension reduction, to identify key drivers of variation in your data. We do this on the plant and fungal data separately, as otherwise the signal of the fungal data is lost due to the dominance of the plant reads. 
+
 
 #### *B. distachyon* reads  
 When we insepct the *B. distachyon* reads, we can see that the clustering shows clusters with an obvious reason. We see a slight rep effect (to be expected), but no other patterns in the data that explain the clustering (Figure \@ref(fig:brachypca)). This suggests natural biological variation is the main driver. N.B. don't be suprised that there are not any obvious clusters based on fungal isolate used. The effect of the isolate would not be sufficient enough to cause enough variation in the brachy reads that could be picked up by principle componends 1 and 2. 
 
-```{r brachypca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A principle component analysis of *B. distachyon* reads. Colours represent reps."}
+```{r brachypca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.pos = "ht",fig.cap="A principle component analysis of B. distachyon reads. Colours represent reps."}
 library(ggplot2)
 library(tidyverse)
 library(gridExtra)
@@ -80,7 +82,8 @@ ggplot(brachy_pcaData, aes(x=PC1, y=PC2)) + geom_point(aes(color=Rep), size=4, a
 When we explore the *Z. tritici* reads only, we see a clear clustering based on timepoint, with T0 reads clustered together, separated from the other timepoints. This is to be expected (and is something I have seen before in my data - the early timepoint on its own). You can also see some level of clustering between the other timepoints, but these groups are not very clearly defined (Figure \@ref(fig:zymopca)). The shapes of the points represent the isolates, and as you can see, there is not much variance that we can attribute to isolate.  
 
 
-```{r zymopca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.cap="A principle component analysis of *Z. tritici* reads. Colours represent Timepoint and shape represents fungal isolate used."}
+```{r zymopca, echo=FALSE, results=F, warning=F, comment=F, message=F, fig.pos = "ht",fig.cap="A principle component analysis of Z. tritici reads. Colours represent Timepoint and shape represents fungal isolate used."}
+
 library(ggplot2)
 
 zymo_pcaData<-read.csv("~/Documents/colleen_brachy/Data/zymo_PCA.csv")
@@ -101,7 +104,7 @@ ggplot(zymo_pcaData, aes(x=PC1, y=PC2)) + geom_point(aes(color=Timepoint, shape=
 ```
 
 
-### Read count statistics
+## Read count statistics
 As part of the pre-processing of RNAseq data, it is good to asses and quantify the number of genes expressed in each sample. This is of particular importance when looking at dual RNAseq of a host + pathogen system.  To do this, we filter out genes based on their expression level, and the consistency of their expression across the reps. Here, I have filtered genes that are expressed at 0.5 transcripts per million (TPM) or more, in 2 out of the three reps. For example, for 'Gene A' to be considered 'expressed' in Sample 1, timepoint 1, it would have to be expressed (TPM >=0.5) in 2 out of the three reps for that sample.
 Based on these criteria, we found a total of 55,420 genes to be expressed in this data, with an average of 46,781 genes expressed per sample (Table \@ref(tab:tab2)).   
 Please note that these are fairly stringent filtering parameters, and may not be necessary, especially if you wish to detect pathogen genes that may be present at very low levels.  
@@ -116,10 +119,11 @@ kable(table(expressed$Factor), caption="Number of expressed genes per sample (av
 ```
 
 
-We can break these down into host and pathogen genes and see how many genes from each species are expressed in each sample. As we can see from figure \@ref(fig:fig4), the number of *B. distachyon* genes is fairly stable cross the timepoints, and we see a slight increase in *Z. tritici* reads from 0 DPI to 4 DPI, and the number of genes expressed is then stable across timepoints. This is really interesting and informative, it could mean that the fungus is growing between days 0 and 4, but because it is the *number* of genes expressed, rather than the *abundance* of genes expressed, it more likely indicates that the fungus is active and doing stuff at 4 DPI that its not doing at 0 DPI. This is logical really as at 0 DPI its just been chilling on a petri dish!
+We can break these down into host and pathogen genes and see how many genes from each species are expressed in each sample. As we can see from figure \@ref(fig:fig4), the number of *B. distachyon* genes is fairly stable cross the timepoints, and we see a slight increase in *Z. tritici* reads from 0 DPI to 4 DPI, and the number of genes expressed is then stable across timepoints. This is really interesting and informative, it could mean that the fungus is growing between days 0 and 4, but because it is the *number* of genes expressed, rather than the *abundance* of genes expressed, it more likely indicates that the fungus is active and doing stuff at 4 DPI that its not doing at 0 DPI. This is logical really as at 0 DPI its just been chilling on a petri dish!  
 
 
-```{r fig4, echo=F, results=F, warning=F, comment=F, message=F, fig.cap="The number of expressed genes from both species across the 4 timepoints."}
+
+```{r fig4, echo=F,fig.pos = "ht", results=F, warning=F, comment=F, message=F, fig.cap="The number of expressed genes from both species across the 4 timepoints."}
 tab2<-read.csv("~/Documents/colleen_brachy/Data/expressed_genes_table.csv")
 library(ggplot2)
 ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
@@ -135,7 +139,9 @@ ggplot(tab2, aes(x=as.factor(Timepoint), y=n.genes)) +
 
 ```
 
-### Differential expression analysis
+
+
+## Differential expression analysis
 
 In this sections, we explore differential gene expression between samples. As there are no *Z. tritici* controls (i.e. samples without *Z. tritici*), we can explore everything with respect to timepoint 0. We can also look at differences between isolates. Basically at this point I went rogue and did all comparisons; for each isolate, I compared every timepoint to 0 DPI, and for every timepoint, I compared every pair of isolates. This yielded to sets of differentially expressed genes.
 
@@ -145,6 +151,70 @@ all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.
 all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
 
 kable(table(all_genotype_sig$Species, all_genotype_sig$Timepoint, all_genotype_sig$Comparison), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Comparison", "Number of DEGs"))
+```
+
+```{r tab4, echo=F}
+library(knitr)
+all_genotype_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_genotype.csv")
+all_timepoint_sig<-read.csv("~/Documents/colleen_brachy/Data/all_sig_by_timepoint.csv")
 
 kable(table(all_timepoint_sig$Species, all_timepoint_sig$Timepoint, all_timepoint_sig$Isolate), caption="Number of differentally expressed genes","pandoc", align="c", col.names=c("Species", "Timepoint", "Isolate", "Number of DEGs"))
 ```
+
+### Isolate specific DEGs (per timepoint)
+
+We can start to subset the differentially expressed genes based on interesting biological questions. Firsly, we can look at genes that are differentially expressed at a partcular timepoint (compared to 0 DPI) in 1, 2 or 3 of the isolates. Given the observed 'aggresiveness' of 553.11, it might be interesting to look at genes that are differentially expressed in this isolate, and not the others. Similarly, it might be interesting to see genes that are differentially expressed between the isolates, at each timepoint.  
+First, we look at genes that are differentially expressed by timepoint (Figure \@ref(fig:fig5)).
+
+```{r fig5, out.width=".8\\linewidth", fig.pos = "ht", include=TRUE, fig.align="center", fig.cap=c("Venn diagrams of differentially expressed genes between timepoints, using timpoint '0 DPI' as the control A) Isolate 553.11, B) Isolate 560.11, C) Isolate IPO323."), echo=FALSE}
+knitr::include_graphics("venn_diagram_isolates.pdf")
+```
+
+### DEGs between the isolates
+Secondly, we can see genes that are differentially expressed by isolate, across the timepoints (Figure \@ref(fig:fig6)). 
+
+```{r fig6, out.width="1\\linewidth", include=TRUE, fig.align="center", fig.pos='ht',fig.cap=c("Venn diagrams of differentially expressed genes between isolates. A) 0 DPI, B) 4 DPI, C) 9 DPI, D) 21 DPI"), echo=FALSE}
+knitr::include_graphics("venn_diagrams_timepoints.pdf")
+```
+
+As we can see from Figure \@ref(fig:fig6), tghere are no genes that are differentially expressed between all three comparisons. Given the interesting phenotype observed on leaves inoculated with 553.11, it might be interesting to look at genes that are differentially expressed between 553.11 and the other two, but not differentially expressed between 560.11 and IPO323. For example in Figure \@ref(fig:fig6) part A, the 12, 61 and 12 genes might be of interest when searching for a 553.11-specific transcriptional response. 
+
+For all of the DEGs, and their subsets thereof, I have put csv tables in the directory for you. Each of these tables has the gene name as rows, and the condition (so either timepoint, or comparison) as rows, and each gene has a 1 if it is differentially expressed and a 0 if it is not. I find the easiest way to find genes in subsets I am interested in is to just sort by those columns, and extract genes that have a 1 in those columns, and a 0 in the others. You can then extract their differential expression data from the files 'all_genetype_sig.csv' and 'all_timepoint_sig.csv'.
+
+### Species breakdown of differentially expressed genes
+As we are looking at dual RNAseq, it is important to dileneate the DEGs by species. As we can see in Figure  \@ref(fig:fig7), there is a high proprtion of the DEGs in the 553.11-treated saples that are *Z. tritici* genes. This seems specific to the 553.11-treated samples. Another interesting/nice observatioun is that the number of DEGs increases over time across the comparisons between isolates. Of course these are just preliminary observation- there is alot of fishing that can be done within these data to find the patterns. We can also see that there are alot more DEGs in the samples where the timepoints were compared than the isolates. This will be because there are no controls so many of these DEGs will be because of differences in expression that is independant of treatment. However these genes may be interesting to look at with respect to DEGs that are also differentially expressed between the isolates (at that should be timepoint-independant).
+
+
+```{r fig7, echo=F, fig.pos='ht' ,results=F, warning=F, comment=F, message=F, fig.cap="The number of differentially expressed genes by species A) Differentially expressed genes between each timepoint and 0 DPI, separated by isolate, B) Differentially expressed genes betweeen isolates."}
+
+species_iso<-read.csv("~/Documents/colleen_brachy/Data/DEGs_isolate_by_species.csv")
+species_time<-read.csv("~/Documents/colleen_brachy/Data/DEGs_timepoint_by_species.csv")
+a<-ggplot(species_iso, aes(x=as.factor(Timepoint), y=DEGs)) +
+  geom_col(aes(fill=Species)) + facet_wrap(~Isolate, ncol=1) +
+  theme_bw() +
+  scale_fill_manual(values=c("grey65", "grey40"), 
+                    labels=c("Bd", "Zt"))+
+  theme(text = element_text(colour="black"),
+        axis.text.x = element_text(colour="black"),
+        axis.text.y= element_text(colour="black"),
+        legend.position="none") +
+  xlab("Timepoint (DPI)")+
+  ylab("Number of differentially expressed genes")
+
+
+b<-ggplot(species_time, aes(x=as.factor(Timepoint), y=DEGs)) +
+  geom_col(aes(fill=Species))  + facet_wrap(~Comparison, ncol=1) +
+  theme_bw() +
+  scale_fill_manual(values=c("grey65", "grey40"),
+                    labels=c("Bd", "Zt")) +
+  theme(text = element_text(colour="black"),
+        axis.text.x = element_text(colour="black"),
+        legend.position="none") +
+  xlab("Timepoint (DPI)")+
+  ylab("Number of differentially expressed genes")
+
+ggarrange(a, b,
+          align='v', labels=c('A', 'B'),
+          common.legend = T, legend="bottom")
+```
+
