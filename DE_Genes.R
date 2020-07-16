@@ -158,10 +158,12 @@ write.csv(species_time, file="~/Documents/colleen_brachy/Data/DEGs_timepoint_by_
 a<-ggplot(species_iso, aes(x=as.factor(Timepoint), y=DEGs)) +
   geom_col(aes(fill=Species)) + facet_wrap(~Isolate, ncol=1) +
   theme_bw() +
-  scale_fill_manual(values=c("grey65", "grey50"), 
+  scale_fill_manual(values=c("grey60", "grey40"), 
                     labels=c("Bd", "Zt"))+
-  theme(text = element_text(size=15, colour="black"),
-        axis.text.x = element_text(colour="black"), legend.position = "none") +
+  theme(text = element_text(colour="black"),
+        axis.text.x = element_text(colour="black"),
+        axis.text.y= element_text(colour="black"),
+        legend.position="none") +
   xlab("Timepoint (DPI)")+
   ylab("Number of differentially expressed genes")
 
@@ -169,12 +171,14 @@ a<-ggplot(species_iso, aes(x=as.factor(Timepoint), y=DEGs)) +
 b<-ggplot(species_time, aes(x=as.factor(Timepoint), y=DEGs)) +
   geom_col(aes(fill=Species))  + facet_wrap(~Comparison, ncol=1) +
   theme_bw() +
-  scale_fill_manual(values=c("grey65", "grey50"),
+  scale_fill_manual(values=c("grey60", "grey40"),
                     labels=c("Bd", "Zt")) +
-  theme(text = element_text(size=15, colour="black"),
-        axis.text.x = element_text(colour="black")) +
+  theme(text = element_text(colour="black"),
+        axis.text.x = element_text(colour="black"),
+        legend.position="none") +
   xlab("Timepoint (DPI)")+
   ylab("Number of differentially expressed genes")
 
-
-plot_grid(a,b, labels=c("A", "B"), ncol = 2, nrow = 1)
+ggarrange(a, b,
+          align='h', labels=c('A', 'B'),
+          common.legend = T, legend="bottom")
